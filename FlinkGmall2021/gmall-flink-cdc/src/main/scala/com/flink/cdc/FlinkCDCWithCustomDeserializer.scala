@@ -3,7 +3,7 @@ package com.flink.cdc
 import com.alibaba.ververica.cdc.connectors.mysql.MySQLSource
 import com.alibaba.ververica.cdc.connectors.mysql.table.StartupOptions
 import com.alibaba.ververica.cdc.debezium.{DebeziumSourceFunction, StringDebeziumDeserializationSchema}
-import org.apache.flink.api.common.restartstrategy.RestartStrategies
+import com.util.CustomerDeserializer
 import org.apache.flink.runtime.state.filesystem.FsStateBackend
 import org.apache.flink.streaming.api.CheckpointingMode
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
@@ -12,7 +12,7 @@ import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
  *  bin/flink savepoint job_id path
  *  bin/flink run -m -s -c jar  从savepoint启动
  */
-object FlinkCDC {
+object FlinkCDCWithCustomDeserializer {
   def main(args: Array[String]): Unit = {
 
     //1、获取执行环境
@@ -20,12 +20,12 @@ object FlinkCDC {
     env.setParallelism(1)
 
     //1.1开启ck并指定状态后端   memory/fs/rocksdb
-    env.setStateBackend(new FsStateBackend("file:///Users/liufukang/data/finkcdc_ck/gmall_ck"))
-    env.enableCheckpointing(5000)
-    env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE)
-    env.getCheckpointConfig.setCheckpointTimeout(10000)
-    env.getCheckpointConfig.setMaxConcurrentCheckpoints(2)
-    env.getCheckpointConfig.setMinPauseBetweenCheckpoints(2000)
+//    env.setStateBackend(new FsStateBackend("file:///Users/liufukang/data/finkcdc_ck/gmall_ck"))
+//    env.enableCheckpointing(5000)
+//    env.getCheckpointConfig.setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE)
+//    env.getCheckpointConfig.setCheckpointTimeout(10000)
+//    env.getCheckpointConfig.setMaxConcurrentCheckpoints(2)
+//    env.getCheckpointConfig.setMinPauseBetweenCheckpoints(2000)
 
 //    env.setRestartStrategy(RestartStrategies.fixedDelayRestart(5,50000))
 
@@ -37,8 +37,8 @@ object FlinkCDC {
       .password("123456")
       .databaseList("flink")
 //      .tableList()
-      .deserializer(new StringDebeziumDeserializationSchema)
-      .startupOptions(StartupOptions.latest())
+      .deserializer(new CustomerDeserializer)
+      .startupOptions(StartupOptions.initial())
       .build()
     val dataStream = env.addSource(source)
 
@@ -46,6 +46,6 @@ object FlinkCDC {
     dataStream.print()
 
     //4、启动任务
-    env.execute("FlinkCDC")
+    env.execute("FlinkCDCWithCustomDeserializer")
   }
 }
