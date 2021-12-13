@@ -29,7 +29,7 @@ object BaseLogApp {
     //    env.getCheckpointConfig.setMaxConcurrentCheckpoints(2)
     //    env.getCheckpointConfig.setMinPauseBetweenCheckpoints(2000)
 
-    //    env.setRestartStrategy(RestartStrategies.fixedDelayRestart(5,50000))
+    //    env.setRestartStrategy(RestartStrategies.fixedDelayRestart())
 
     //TODO 2、消费ods_base_log 主题创建流
     val sourceTopic = "ods_base_log"
@@ -59,7 +59,10 @@ object BaseLogApp {
           }
         }
       }
-    })
+    },createTypeInformation[JSONObject])
+
+    //打印脏数据
+    jsonObjDS.getSideOutput(outputTag).print("Dirty>>>>>>>>>>>>>>>>>>>>")
 
     //TODO 4、新老用户校验 状态编程
     val jsonObjWithNewFlagDS = jsonObjDS.keyBy(new KeySelector[JSONObject,String] {
@@ -85,7 +88,7 @@ object BaseLogApp {
         }
         value
       }
-    })
+    },createTypeInformation[JSONObject])
 
     //TODO 5、分流 侧输出流 页面：主流  启动：侧输出流  曝光：侧输出流
     val startOutputTag = new OutputTag[String]("start")
@@ -116,7 +119,7 @@ object BaseLogApp {
           }
         }
       }
-    })
+    },Types.STRING)
 
     //TODO 6、提取侧输出流
     val startDS = pageDS.getSideOutput(startOutputTag)
@@ -126,6 +129,10 @@ object BaseLogApp {
     startDS.print("Start>>>>>>>>>>>>>>>>>>>>")
     pageDS.print("Page>>>>>>>>>>>>>>>>>>>>>>")
     displayDS.print("Display>>>>>>>>>>>>>>>>")
+
+    startDS.addSink(MyKafkaUtil.getKafkaProducer("dwd_start_log"))
+    pageDS.addSink(MyKafkaUtil.getKafkaProducer("dwd_page_log"))
+    displayDS.addSink(MyKafkaUtil.getKafkaProducer("dwd_display_log"))
 
     //TODO 8、启动任务
     env.execute("BaseLogApp")
