@@ -7,5 +7,5 @@ public class GmallConfig {
     //Phoenix 驱动
     public static final String PHOENIX_DRIVER = "org.apache.phoenix.jdbc.PhoenixDriver";
     //Phoenix 连接参数
-    public static final String PHOENIX_SERVER = "jdbc:phoenix:localhost:2181";
+    public static final String PHOENIX_SERVER = "jdbc:phoenix:127.0.0.1:2181";
 }

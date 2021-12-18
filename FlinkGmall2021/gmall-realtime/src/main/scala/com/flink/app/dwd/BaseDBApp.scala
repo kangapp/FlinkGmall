@@ -5,7 +5,7 @@ import com.alibaba.ververica.cdc.connectors.mysql.MySQLSource
 import com.alibaba.ververica.cdc.connectors.mysql.table.StartupOptions
 import com.alibaba.ververica.cdc.debezium.DebeziumSourceFunction
 import com.flink.bean.TableProcess
-import com.flink.function.{CustomerDeserializer, TableProcessFunction}
+import com.flink.function.{CustomerDeserializer, DimSinkFunction, TableProcessFunction}
 import com.flink.util.MyKafkaUtil
 import org.apache.flink.api.common.restartstrategy.RestartStrategies
 import org.apache.flink.api.common.state.MapStateDescriptor
@@ -14,6 +14,10 @@ import org.apache.flink.api.scala.typeutils.Types
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.api.scala._
 import org.apache.flink.streaming.api.scala.OutputTag
+import org.apache.flink.streaming.connectors.kafka.KafkaSerializationSchema
+import org.apache.kafka.clients.producer.ProducerRecord
+
+import java.lang
 
 object BaseDBApp {
 
@@ -39,8 +43,11 @@ object BaseDBApp {
     val kafkaDS = env.addSource(MyKafkaUtil.getKafkaConsumer(sourceTopic,groupId))
 
     //TODO 3、将每行数据转换为JSON对象并过滤（delete）
-    val jsonObjDS = kafkaDS.map(JSON.parseObject(_)).filter(item => "delete".equalsIgnoreCase(item.getString("type")))
+    val jsonObjDS = kafkaDS.map(JSON.parseObject(_)).filter(item => !("delete".equalsIgnoreCase(item.getString("type"))))
 
+    /**
+     * TODO 修改定时扫描
+     */
     //TODO 4、使用FlinkCDC消费配置表并处理成   广播流
     val source:DebeziumSourceFunction[String] = MySQLSource.builder[String]()
       .hostname("localhost")
@@ -50,7 +57,7 @@ object BaseDBApp {
       .databaseList("bigdata")
       .tableList("bigdata.table_process")
       .deserializer(new CustomerDeserializer)
-      .startupOptions(StartupOptions.latest())
+      .startupOptions(StartupOptions.initial())
       .build()
     val tableProcessDS = env.addSource(source)
     val mapStateDescriptor = new MapStateDescriptor[String,TableProcess]("map-state",Types.STRING,createTypeInformation[TableProcess])
@@ -69,6 +76,16 @@ object BaseDBApp {
     //TODO 8、将kafka数据写入kafka主题，将HBase数据写入Phoneix表
     kafka.print("kafka>>>>>>>>>>>>>>>>>")
     hbase.print("hbase>>>>>>>>>>>>>>>>>")
+
+    /**
+     * 由于hbase表字段数据不确定，无法使用JDBCSink，所以使用自定义Sink
+     */
+    hbase.addSink(new DimSinkFunction)
+    kafka.addSink(MyKafkaUtil.getKafkaProducer(new KafkaSerializationSchema[JSONObject] {
+      override def serialize(value: JSONObject, timestamp: lang.Long): ProducerRecord[Array[Byte], Array[Byte]] = {
+        new ProducerRecord(value.getString("sinkTable"),value.getString("after").getBytes())
+      }
+    }))
 
     //TODO 9、启动任务
     env.execute("BaseDBApp")

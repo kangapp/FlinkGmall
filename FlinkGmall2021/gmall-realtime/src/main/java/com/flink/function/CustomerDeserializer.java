@@ -62,13 +62,13 @@ public class CustomerDeserializer implements DebeziumDeserializationSchema<Strin
         }
         //5、获取操作类型
         Envelope.Operation operation = Envelope.operationFor(sourceRecord);
-        String opName = operation.name();
+        String opName = operation.name().toLowerCase();
         //6、将字段写入JSON对象
         result.put("database",database);
         result.put("tableName",tableName);
         result.put("before",beforeJson);
         result.put("after",afterJson);
-        result.put("type",operation);
+        result.put("type",opName);
 
         //7、输出数据
         collector.collect(result.toJSONString());

@@ -17,10 +17,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 public class TableProcessFunction extends BroadcastProcessFunction<JSONObject, String, JSONObject> {
@@ -38,6 +35,7 @@ public class TableProcessFunction extends BroadcastProcessFunction<JSONObject, S
     public void open(Configuration parameters) throws Exception {
         Class.forName(GmallConfig.PHOENIX_DRIVER);
         connection = DriverManager.getConnection(GmallConfig.PHOENIX_SERVER);
+        System.out.println(connection);
     }
 
     @Override
@@ -54,13 +52,13 @@ public class TableProcessFunction extends BroadcastProcessFunction<JSONObject, S
             filterColumn(after, tableProcess.getSinkColumns());
 
             //3、分流 --将输出表/主题信息写入after
-            after.put("sinkTable", tableProcess.getSinkTable());
+            jsonObject.put("sinkTable", tableProcess.getSinkTable());
             if (TableProcess.SINK_TYPE_KAFKA.equals(tableProcess.getSinkType())) {
                 //kafka数据，写入主流   事实表
-                collector.collect(after);
+                collector.collect(jsonObject);
             } else if (TableProcess.SINK_TYPE_HBASE.equals(tableProcess.getSinkType())) {
                 //HBase数据，写入侧数据流   维度表
-                readOnlyContext.output(objectOutputTag, after);
+                readOnlyContext.output(objectOutputTag, jsonObject);
             }
 
         } else {
@@ -93,6 +91,7 @@ public class TableProcessFunction extends BroadcastProcessFunction<JSONObject, S
         JSONObject jsonObject = JSON.parseObject(value);
         String data = jsonObject.getString("after");
         TableProcess tableProcess = JSON.parseObject(data,TableProcess.class);
+        System.out.println(tableProcess);
 
         //2、建表
         if(TableProcess.SINK_TYPE_HBASE.equals(tableProcess.getSinkType())){
@@ -116,11 +115,11 @@ public class TableProcessFunction extends BroadcastProcessFunction<JSONObject, S
             sinkPk = "id";
         }
         if(sinkExtend == null) {
-            sinkPk = "";
+            sinkExtend = "";
         }
         StringBuffer createTableSQL = new StringBuffer("create table if not exists ")
-                .append(GmallConfig.HBASE_SCHEMA)
-                .append(".")
+//                .append(GmallConfig.HBASE_SCHEMA)
+//                .append(".")
                 .append(sinkTable)
                 .append("(");
 
@@ -150,6 +149,7 @@ public class TableProcessFunction extends BroadcastProcessFunction<JSONObject, S
             //执行
             preparedStatement.execute();
         } catch (SQLException throwables) {
+            throwables.printStackTrace();
             throw new RuntimeException("建表"+sinkTable+"异常");
         } finally {
             if(preparedStatement != null) {
