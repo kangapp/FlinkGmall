@@ -4,7 +4,6 @@ import com.alibaba.fastjson.{JSON, JSONObject}
 import com.flink.util.MyKafkaUtil
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.api.common.state.{ValueState, ValueStateDescriptor}
-import org.apache.flink.api.java.functions.KeySelector
 import org.apache.flink.streaming.api.datastream.{DataStreamSource, SingleOutputStreamOperator}
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.functions.ProcessFunction
@@ -65,9 +64,8 @@ object BaseLogApp {
     jsonObjDS.getSideOutput(outputTag).print("Dirty>>>>>>>>>>>>>>>>>>>>")
 
     //TODO 4、新老用户校验 状态编程
-    val jsonObjWithNewFlagDS = jsonObjDS.keyBy(new KeySelector[JSONObject,String] {
-      override def getKey(value: JSONObject): String = value.getJSONObject("common").getString("mid")
-    },Types.STRING).map(new RichMapFunction[JSONObject,JSONObject] {
+    val jsonObjWithNewFlagDS = jsonObjDS.keyBy((value: JSONObject) => value.getJSONObject("common").getString("mid"),Types.STRING)
+      .map(new RichMapFunction[JSONObject,JSONObject] {
       private var valueState:ValueState[String] = _
       override def open(parameters: Configuration): Unit = {
         valueState = getRuntimeContext.getState(new ValueStateDescriptor[String]("value-state",Types.STRING))

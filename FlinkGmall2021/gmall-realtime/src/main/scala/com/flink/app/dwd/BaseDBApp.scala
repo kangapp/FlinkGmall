@@ -43,7 +43,7 @@ object BaseDBApp {
     val kafkaDS = env.addSource(MyKafkaUtil.getKafkaConsumer(sourceTopic,groupId))
 
     //TODO 3、将每行数据转换为JSON对象并过滤（delete）
-    val jsonObjDS = kafkaDS.map(JSON.parseObject(_)).filter(item => !("delete".equalsIgnoreCase(item.getString("type"))))
+    val jsonObjDS = kafkaDS.map(JSON.parseObject(_)).filter(item => !"delete".equalsIgnoreCase(item.getString("type")))
 
     /**
      * TODO 修改定时扫描
