@@ -24,5 +24,5 @@
 - [模拟日志生成器](source/mock_behavior/readme.txt)
   > 将日志发送到指定端口
 
-- [日志采集](FlinkGmall2021/gmall-logger/README.md)
+- [日志采集](FlinkGmall2021/gmall-logger)
 
