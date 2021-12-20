@@ -15,3 +15,14 @@
 
 ### 实时架构
 ![实时架构](images/jiagou.png)
+
+## 需求模块
+> 开发全部基于Docker环境
+
+### 日志数据采集
+
+- [模拟日志生成器](source/mock_behavior/readme.txt)
+  > 将日志发送到指定端口
+
+- [日志采集](FlinkGmall2021/gmall-logger/README.md)
+
