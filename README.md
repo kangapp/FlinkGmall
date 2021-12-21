@@ -19,17 +19,22 @@
 ## 需求模块
 > 开发全部基于Docker环境
 
-### 日志数据采集
+### 日志数据采集(ods)
 
 - [模拟日志生成器](source/mock_behavior)
   > 将日志发送到指定端口
 
 - [日志采集](FlinkGmall2021/gmall-logger)
 
-### 业务数据库采集
+### 业务数据库采集(ods)
 
 - [数据库环境配置](util/mysql)  
   1、导入建表数据  
   2、开启binlog
 - [日志采集](FlinkGmall2021/gmall-flink-cdc)
+
+### [用户行为日志(dwd)](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dwd/BaseLogApp.scala)
+- 识别新老用户
+- 利用侧输出流实现数据拆分
+- 将不同的流数据推送到kafka不同的topic
 
