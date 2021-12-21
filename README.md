@@ -21,14 +21,14 @@
 
 ### 日志数据采集
 
-- [模拟日志生成器](source/mock_behavior/readme.txt)
+- [模拟日志生成器](source/mock_behavior)
   > 将日志发送到指定端口
 
 - [日志采集](FlinkGmall2021/gmall-logger)
 
 ### 业务数据库采集
 
-- [数据库环境配置](util/mysql/readme.txt)  
+- [数据库环境配置](util/mysql)  
   1、导入建表数据  
   2、开启binlog
 - [日志采集](FlinkGmall2021/gmall-flink-cdc)
