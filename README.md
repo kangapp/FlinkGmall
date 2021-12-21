@@ -38,3 +38,9 @@
 - 利用侧输出流实现数据拆分
 - 将不同的流数据推送到kafka不同的topic
 
+### [DB业务数据(dwd)](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dwd/BaseDBApp.scala)
+- FlinkCDC读取db数据进行etl处理
+- 实现动态分流，将db数据动态拆分成事实表数据和维度表数据，采用mysql表存储相应的配置信息，并使用广播流
+  ![broacast](images/brocast.png)
+- 维度表数据保存到hbase，事实表数据保存到kafka
+
