@@ -44,3 +44,15 @@
   ![broacast](images/brocast.png)
 - 维度表数据保存到hbase，事实表数据保存到kafka
 
+### [访客UV计算(dwm)](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dwm/UniqueVisitApp.scala)
+- 读取页面日志kafka数据
+- 状态编程，保留每个用户第一次登录的记录，并设置状态ttl
+- 过滤数据写入kafka
+
+### [跳出明细计算](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dwm/UserJumpDetailApp.scala)
+- 读取页面日志kafka数据
+- 定义数据流watermark
+- 定义模式序列，提取匹配数据和超时数据进行union
+- 数据流写入kakfa
+
+
