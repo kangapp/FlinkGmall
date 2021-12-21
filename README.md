@@ -26,3 +26,10 @@
 
 - [日志采集](FlinkGmall2021/gmall-logger)
 
+### 业务数据库采集
+
+- [数据库环境配置](util/mysql/readme.txt)  
+  1、导入建表数据  
+  2、开启binlog
+- [日志采集](FlinkGmall2021/gmall-flink-cdc)
+
