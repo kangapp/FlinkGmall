@@ -34,9 +34,9 @@ object OrderWideApp {
     val orderDetailSourceTopic: String = "dwd_order_detail"
     val orderWideSinkTopic: String = "dwm_order_wide"
     val groupId: String = "order_wide_group"
-    val orderInfoDS = env.addSource(MyKafkaUtil.getKafkaConsumer(orderDetailSourceTopic,groupId))
+    val orderInfoDS = env.addSource(MyKafkaUtil.getKafkaConsumer(orderInfoSourceTopic,groupId))
       .map(line => {
-        val orderInfo:OrderInfo = JSON.parseObject(line, Class[OrderInfo])
+        val orderInfo:OrderInfo = JSON.parseObject(line, classOf[OrderInfo])
 
         val createTime = orderInfo.getCreate_time
         val dateTimeArr = createTime.split(" ")
@@ -53,7 +53,7 @@ object OrderWideApp {
 
     val orderDetailDS = env.addSource(MyKafkaUtil.getKafkaConsumer(orderDetailSourceTopic,groupId))
       .map(line => {
-        val orderDetail:OrderDetail = JSON.parseObject(line, Class[OrderDetail])
+        val orderDetail:OrderDetail = JSON.parseObject(line, classOf[OrderDetail])
         val createTime = orderDetail.getCreate_time
 
         val simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
@@ -63,6 +63,9 @@ object OrderWideApp {
       .withTimestampAssigner(new SerializableTimestampAssigner[OrderDetail] {
         override def extractTimestamp(element: OrderDetail, l: Long): Long = element.getCreate_ts
       }))
+
+    orderInfoDS.print("orderInfo>>>>>>>>>>>>>>>>>>")
+    orderDetailDS.print("orderDetail>>>>>>>>>>>>>>>>>")
 
     //TODO 3、双流JOIN
     val orderWideWithoutDimDS = orderInfoDS.keyBy((orderInfo:OrderInfo) => orderInfo.getId)
