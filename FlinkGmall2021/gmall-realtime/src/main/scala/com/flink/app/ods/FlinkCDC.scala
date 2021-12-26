@@ -31,7 +31,7 @@ object FlinkCDC {
       .password("123456")
       .databaseList("flink")
       .deserializer(new CustomerDeserializer)
-      .startupOptions(StartupOptions.latest())
+      .startupOptions(StartupOptions.initial())
       .build()
     val dataStream = env.addSource(source)
 

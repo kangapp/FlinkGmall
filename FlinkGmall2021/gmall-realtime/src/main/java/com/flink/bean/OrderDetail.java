@@ -104,4 +104,21 @@ public class OrderDetail {
     public void setCreate_ts(Long create_ts) {
         this.create_ts = create_ts;
     }
+
+    @Override
+    public String toString() {
+        return "OrderDetail{" +
+                "id=" + id +
+                ", order_id=" + order_id +
+                ", sku_id=" + sku_id +
+                ", order_price=" + order_price +
+                ", sku_num=" + sku_num +
+                ", sku_name='" + sku_name + '\'' +
+                ", create_time='" + create_time + '\'' +
+                ", split_total_amount=" + split_total_amount +
+                ", split_activity_amount=" + split_activity_amount +
+                ", split_coupon_amount=" + split_coupon_amount +
+                ", create_ts=" + create_ts +
+                '}';
+    }
 }

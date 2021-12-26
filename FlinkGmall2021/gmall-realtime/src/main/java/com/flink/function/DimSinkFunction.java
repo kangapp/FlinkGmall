@@ -2,6 +2,7 @@ package com.flink.function;
 
 import com.alibaba.fastjson.JSONObject;
 import com.flink.common.GmallConfig;
+import com.flink.util.DimUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
@@ -37,6 +38,13 @@ public class DimSinkFunction extends RichSinkFunction<JSONObject> {
 
             //预编译SQL
             preparedStatement = connection.prepareStatement(upsertSql);
+
+            //如果当前数据为更新操作，则先删除redis数据，也可直接更新防止数据没写入数据库就被重新更新
+            String sinkTable = value.getString("sinkTable");
+            JSONObject after = value.getJSONObject("after");
+            if ("update".equals(value.getString("type"))) {
+                DimUtil.delRedisDimInfo(sinkTable.toUpperCase(), after.getString("id"));
+            }
 
             //执行插入操作
             preparedStatement.executeUpdate();

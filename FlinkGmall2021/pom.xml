@@ -117,7 +117,33 @@
             <exclusion>
                 <groupId>org.glassfish</groupId>
                 <artifactId>javax.el</artifactId> </exclusion>
-        </exclusions>
+            </exclusions>
+        </dependency>
+
+        <!--commons-beanutils 是 Apache 开源组织提供的用于操作 JAVA BEAN 的工具包。
+        使用 commons-beanutils，我们可以很方便的对 bean 对象的属性进行操作-->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.3</version>
+        </dependency>
+        <!--Guava 工程包含了若干被 Google 的 Java 项目广泛依赖的核心库,方便开发-->
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>29.0-jre</version>
+        </dependency>
+
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>3.3.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-all</artifactId>
+            <version>5.7.18</version>
         </dependency>
     </dependencies>
 

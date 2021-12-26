@@ -1,15 +1,19 @@
 package com.flink.app.dwm
 
-import com.alibaba.fastjson.JSON
+import cn.hutool.core.date.DateUtil
+import com.alibaba.fastjson.{JSON, JSONObject}
 import com.flink.bean.{OrderDetail, OrderInfo, OrderWide}
+import com.flink.function.DimAsyncFunction
 import com.flink.util.MyKafkaUtil
 import org.apache.flink.api.common.eventtime.{SerializableTimestampAssigner, WatermarkStrategy}
+import org.apache.flink.streaming.api.datastream.{AsyncDataStream, SingleOutputStreamOperator}
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment
 import org.apache.flink.streaming.api.functions.co.ProcessJoinFunction
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.util.Collector
 
 import java.text.SimpleDateFormat
+import java.util.concurrent.TimeUnit
 
 object OrderWideApp {
 
@@ -64,22 +68,30 @@ object OrderWideApp {
         override def extractTimestamp(element: OrderDetail, l: Long): Long = element.getCreate_ts
       }))
 
-    orderInfoDS.print("orderInfo>>>>>>>>>>>>>>>>>>")
-    orderDetailDS.print("orderDetail>>>>>>>>>>>>>>>>>")
-
     //TODO 3、双流JOIN
-    val orderWideWithoutDimDS = orderInfoDS.keyBy((orderInfo:OrderInfo) => orderInfo.getId)
+    val orderWideWithoutDimDS:SingleOutputStreamOperator[OrderWide] = orderInfoDS.keyBy((orderInfo:OrderInfo) => orderInfo.getId)
       .intervalJoin(orderDetailDS.keyBy((orderDetail:OrderDetail) => orderDetail.getOrder_id))
       .between(Time.seconds(-5), Time.seconds(5))
-      .process(new ProcessJoinFunction[OrderInfo, OrderDetail, OrderWide] {
-        override def processElement(in1: OrderInfo, in2: OrderDetail, context: ProcessJoinFunction[OrderInfo, OrderDetail, OrderWide]#Context, collector: Collector[OrderWide]): Unit = {
-          collector.collect(new OrderWide(in1, in2))
-        }
+      .process((in1: OrderInfo, in2: OrderDetail, context: ProcessJoinFunction[OrderInfo, OrderDetail, OrderWide]#Context, collector: Collector[OrderWide]) => {
+        collector.collect(new OrderWide(in1, in2))
       })
 
-    orderWideWithoutDimDS.print("orderWideWithoutDinDs>>>>>>>>>>>>>>>")
-
     //TODO 4、关联维度信息
+//    orderWideWithoutDimDS.map(orderWide => {
+//      val user_id = orderWide.getUser_id
+//    })
+
+    val orderWideWithUserDS = AsyncDataStream.unorderedWait(orderWideWithoutDimDS, new DimAsyncFunction[OrderWide]("DIM_USER_INFO") {
+      override def getKey(orderWide: OrderWide): String = orderWide.getUser_id.toString
+
+      override def join(orderWide: OrderWide, dimInfo: JSONObject): Unit = {
+        orderWide.setUser_gender(dimInfo.getString("gender"))
+        val birthday = dimInfo.getString("birthday")
+        orderWide.setUser_age(DateUtil.ageOfNow(birthday))
+      }
+    }, 60, TimeUnit.SECONDS)
+
+    orderWideWithUserDS.print("orderWideWithUserDS>>>>>>>>>>>>>>>>>>>")
 
     //TODO 5、将数据写入到kafka
 

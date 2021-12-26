@@ -140,4 +140,25 @@ public class OrderInfo {
     public void setCreate_ts(Long create_ts) {
         this.create_ts = create_ts;
     }
+
+    @Override
+    public String toString() {
+        return "OrderInfo{" +
+                "id=" + id +
+                ", province_id=" + province_id +
+                ", order_status='" + order_status + '\'' +
+                ", user_id=" + user_id +
+                ", total_amount=" + total_amount +
+                ", activity_reduce_amount=" + activity_reduce_amount +
+                ", coupon_reduce_amount=" + coupon_reduce_amount +
+                ", original_total_amount=" + original_total_amount +
+                ", feight_fee=" + feight_fee +
+                ", expire_time='" + expire_time + '\'' +
+                ", create_time='" + create_time + '\'' +
+                ", operate_time='" + operate_time + '\'' +
+                ", create_date='" + create_date + '\'' +
+                ", create_hour='" + create_hour + '\'' +
+                ", create_ts=" + create_ts +
+                '}';
+    }
 }
