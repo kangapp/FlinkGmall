@@ -59,5 +59,5 @@
 - 定义合并之后的订单宽表实体类，包含事实数据和维度数据
 - 订单流和订单明细流Join，这里选择intervalJoin(目前支持事件时间，所以需要指定watermark)
 - 关联维表数据，封装[Jdbc工具类](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/util/JdbcUtil.java)和[维表查询工具类](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/util/DimUtil.java)
-- 针对维表查询的两个优化：[旁路缓存(redis)](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/util/RedisUtil.java)、[异步查询](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/util/ThreadPoolUtil.java)
+- 针对维表查询的两个优化：[旁路缓存(redis)](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/util/RedisUtil.java)、[异步查询](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/function/DimAsyncFunction.java)
 - 结果数据写入kafka
