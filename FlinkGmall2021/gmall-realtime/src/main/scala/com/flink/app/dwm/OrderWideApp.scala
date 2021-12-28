@@ -1,6 +1,7 @@
 package com.flink.app.dwm
 
 import cn.hutool.core.date.DateUtil
+import com.alibaba.fastjson.serializer.SerializerFeature
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.flink.bean.{OrderDetail, OrderInfo, OrderWide}
 import com.flink.function.DimAsyncFunction
@@ -92,47 +93,53 @@ object OrderWideApp {
       }
     }, 60, TimeUnit.SECONDS)
 
+    orderWideWithUserDS.print("orderWideWithUserDS>>>>>>>>>>>>>>>>>>")
+
     //4.2 关联地区维度
     val orderWideWithProvinceDS = AsyncDataStream.unorderedWait(orderWideWithUserDS, new DimAsyncFunction[OrderWide]("DIM_BASE_PROVINCE") {
       override def getKey(orderWide: OrderWide): String = orderWide.getProvince_id.toString
 
       override def join(orderWide: OrderWide, dimInfo: JSONObject): Unit = {
         orderWide.setProvince_name(dimInfo.getString("name"))
-        orderWide.setProvince_area_code(dimInfo.getString("area_code"))
-        orderWide.setProvince_iso_code(dimInfo.getString("iso_code"))
-        orderWide.setProvince_3166_2_code(dimInfo.getString("iso_3166_2"))
+        orderWide.setProvince_area_code(dimInfo.getString("areaCode"))
+        orderWide.setProvince_iso_code(dimInfo.getString("isoCode"))
+        orderWide.setProvince_3166_2_code(dimInfo.getString("iso31662"))
       }
     }, 60, TimeUnit.SECONDS)
+    orderWideWithProvinceDS.print("orderWideWithProvinceDS>>>>>>>>>>>>>>>>>")
 
     //4.3 关联sku维度
     val orderWideWithSkuDS = AsyncDataStream.unorderedWait(orderWideWithProvinceDS, new DimAsyncFunction[OrderWide]("DIM_SKU_INFO") {
       override def getKey(orderWide: OrderWide): String = orderWide.getSku_id.toString
 
       override def join(orderWide: OrderWide, dimInfo: JSONObject): Unit = {
-        orderWide.setSku_name(dimInfo.getString("sku_name"))
-        orderWide.setCategory3_id(dimInfo.getLong("category3_id"))
-        orderWide.setSpu_id(dimInfo.getLong("spu_id"))
-        orderWide.setTm_id(dimInfo.getLong("tm_id"))
+        orderWide.setSku_name(dimInfo.getString("skuName"))
+        orderWide.setCategory3_id(dimInfo.getLong("category3Id"))
+        orderWide.setSpu_id(dimInfo.getLong("spuId"))
+        orderWide.setTm_id(dimInfo.getLong("tmId"))
       }
     }, 60, TimeUnit.SECONDS)
+    orderWideWithSkuDS.print("orderWideWithSkuDS>>>>>>>>>>>>>>>>>>>")
 
     //4.4 关联spu维度
     val orderWideWithSpuDS = AsyncDataStream.unorderedWait(orderWideWithSkuDS, new DimAsyncFunction[OrderWide]("DIM_SPU_INFO") {
       override def getKey(orderWide: OrderWide): String = orderWide.getSpu_id.toString
 
       override def join(orderWide: OrderWide, dimInfo: JSONObject): Unit = {
-        orderWide.setSpu_name(dimInfo.getString("spu_name"))
+        orderWide.setSpu_name(dimInfo.getString("spuName"))
       }
     }, 60, TimeUnit.SECONDS)
+    orderWideWithSpuDS.print("orderWideWithSpuDS>>>>>>>>>>>>>>>>>>>>")
 
     //4.5 关联品牌维度
     val orderWideWithTmDS = AsyncDataStream.unorderedWait(orderWideWithSpuDS, new DimAsyncFunction[OrderWide]("DIM_BASE_TRADEMARK") {
       override def getKey(orderWide: OrderWide): String = orderWide.getTm_id.toString
 
       override def join(orderWide: OrderWide, dimInfo: JSONObject): Unit = {
-        orderWide.setTm_name(dimInfo.getString("tm_name"))
+        orderWide.setTm_name(dimInfo.getString("tmName"))
       }
     }, 60, TimeUnit.SECONDS)
+    orderWideWithTmDS.print("orderWideWithTmDS>>>>>>>>>>>>>>>>>>>")
 
     //4.6 关联品类维度
     val orderWideWithCategory3DS = AsyncDataStream.unorderedWait(orderWideWithTmDS, new DimAsyncFunction[OrderWide]("DIM_BASE_CATEGORY3") {
@@ -142,9 +149,10 @@ object OrderWideApp {
         orderWide.setCategory3_name(dimInfo.getString("name"))
       }
     }, 60, TimeUnit.SECONDS)
+    orderWideWithCategory3DS.print("orderWideWithCategory3DS>>>>>>>>>>>>>>>>>>>")
 
     //TODO 5、将数据写入到kafka
-    orderWideWithCategory3DS.map(JSON.toJSONString(_)).addSink(MyKafkaUtil.getKafkaProducer(orderWideSinkTopic))
+    orderWideWithCategory3DS.map(JSON.toJSONString(_, SerializerFeature.EMPTY: _*)).addSink(MyKafkaUtil.getKafkaProducer(orderWideSinkTopic))
 
     //TODO 6、启动任务
     env.execute("OrderWideApp")
