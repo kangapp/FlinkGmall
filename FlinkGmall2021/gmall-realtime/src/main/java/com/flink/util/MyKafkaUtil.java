@@ -33,6 +33,19 @@ public class MyKafkaUtil {
         Properties properties = new Properties();
         properties.put(ConsumerConfig.GROUP_ID_CONFIG,groupId);
         properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,brokers);
-        return new FlinkKafkaConsumer<String>(topic,new SimpleStringSchema(),properties);
+        FlinkKafkaConsumer<String> consumer = new FlinkKafkaConsumer<String>(topic,new SimpleStringSchema(),properties);
+        consumer.setStartFromLatest();
+        return consumer;
+    }
+
+    //拼接 Kafka 相关属性到 DDL
+    public static String getKafkaDDL(String topic,String groupId){
+        String ddl="'connector' = 'kafka', " +
+                " 'topic' = '"+topic+"'," +
+                " 'properties.bootstrap.servers' = '"+ brokers +"', " +
+                " 'properties.group.id' = '"+groupId+ "', " +
+                " 'format' = 'json', " +
+                " 'scan.startup.mode' = 'latest-offset' ";
+        return ddl;
     }
 }
