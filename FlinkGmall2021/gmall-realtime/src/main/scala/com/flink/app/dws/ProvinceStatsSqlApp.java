@@ -1,6 +1,7 @@
 package com.flink.app.dws;
 
 import com.flink.bean.ProvinceStats;
+import com.flink.util.ClickHouseUtil;
 import com.flink.util.MyKafkaUtil;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
@@ -56,6 +57,7 @@ public class ProvinceStatsSqlApp {
 
         //TODO 5、打印数据并写入clickhouse
         provinceStatsDataStream.print("result>>>>>>>>>>>");
+        provinceStatsDataStream.addSink(ClickHouseUtil.<ProvinceStats>getSink("insert into province_stats_2021 values(?,?,?,?,?,?,?,?,?,?)"));
 
         //TODO 6、启动任务
         env.execute("ProvinceStatsSqlApp");
