@@ -10,7 +10,7 @@ import java.io.IOException;
 import java.util.List;
 
 @FunctionHint(output = @DataTypeHint("ROW<word STRING>"))
-public class KeyworkUDTF extends TableFunction<Row>{
+public class KeywordUDTF extends TableFunction<Row>{
 
     public void eval(String str) {
         try {
