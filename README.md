@@ -56,8 +56,41 @@
 - 数据流写入kakfa
 
 ### [订单宽表(dwm)](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dwm/OrderWideApp.scala)
-- 定义合并之后的订单宽表实体类，包含事实数据和维度数据
+- 定义合并之后的[订单宽表](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/bean/OrderWide.java)实体类，包含事实数据和维度数据
 - 订单流和订单明细流Join，这里选择intervalJoin(目前支持事件时间，所以需要指定watermark)
 - 关联维表数据，封装[Jdbc工具类](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/util/JdbcUtil.java)和[维表查询工具类](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/util/DimUtil.java)
 - 针对维表查询的两个优化：[旁路缓存(redis)](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/util/RedisUtil.java)、[异步查询](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/function/DimAsyncFunction.java)
 - 结果数据写入kafka
+
+### [支付宽表(dwm)](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dwm/PaymentWideApp.scala)
+- 定义[支付宽表](FlinkGmall2021/gmall-realtime/src/main/java/com/flink/bean/PaymentWide.java)实体类
+- 订单宽表和支付表进行Join，选择intervalJoin(目前支持事件时间，所以需要指定watermark)
+- 结果数据写入kafka
+
+### [访客主题宽表(dws)](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dws/VisitorStatsApp.scala)
+- 读取kafka各个明细数据，转换成相同格式对象流
+- 合并数据流，提取时间戳，开窗聚合，补充窗口信息
+- 数据写入clickhouse
+
+### [商品主题宽表(dws)](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dws/ProductStatsApp.java)
+- 从kafka主题中获取各个数据流
+- 将Json字符串数据流转换为统一数据对象的数据流，采用构造者模式
+- 合并数据流，提取时间戳，开窗聚合，补充窗口信息
+- 关联维度补充数据
+- 结果数据写入clickhouse
+
+### [地区主题表(dws)](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dws/ProvinceStatsSqlApp.java)
+- 定义Table流环境
+- 将数据源定义为动态表
+- 通过SQL查询数据，分组、开窗、聚合，生成结果表
+- 把结果表转换为数据流
+- 数据流写入clickhouse
+
+### [关键词主题表(dws)](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/dws/KeywordStatsApp.java)
+- 定义Table流环境
+- 注册自定义[分词函数](FlinkGmall2021/gmall-realtime/src/main/scala/com/flink/app/udf/KeywordUDTF.java) 
+- 将数据流定义为动态表
+- 利用UDTF将数据拆分
+- 通过SQL查询数据，分组、开窗、聚合，生成结果表
+- 把结果表转换为数据流
+- 数据流写入clickhouse
