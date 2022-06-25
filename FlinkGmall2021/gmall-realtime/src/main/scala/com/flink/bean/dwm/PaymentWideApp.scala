@@ -1,4 +1,4 @@
-package com.flink.app.dwm
+package com.flink.bean.dwm
 
 import com.alibaba.fastjson.serializer.SerializerFeature
 import com.alibaba.fastjson.{JSON, JSONObject}

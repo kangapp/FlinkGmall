@@ -1,4 +1,4 @@
-package com.flink.app.ods
+package com.flink.bean.ods
 
 import com.alibaba.ververica.cdc.connectors.mysql.MySQLSource
 import com.alibaba.ververica.cdc.connectors.mysql.table.StartupOptions

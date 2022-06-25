@@ -1,4 +1,4 @@
-package com.flink.app.dws
+package com.flink.bean.dws
 
 import com.alibaba.fastjson.JSON
 import com.flink.bean.VisitorStats

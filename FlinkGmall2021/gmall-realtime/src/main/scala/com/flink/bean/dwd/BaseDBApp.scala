@@ -1,4 +1,4 @@
-package com.flink.app.dwd
+package com.flink.bean.dwd
 
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.alibaba.ververica.cdc.connectors.mysql.MySQLSource

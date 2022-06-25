@@ -11,6 +11,14 @@
 
     <artifactId>gmall-realtime</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>com.alibaba.ververica</groupId>
+            <artifactId>flink-connector-mysql-cdc</artifactId>
+            <version>1.2.0</version>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
             <plugin>

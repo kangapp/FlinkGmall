@@ -1,4 +1,4 @@
-package com.flink.app.dwm
+package com.flink.bean.dwm
 
 import cn.hutool.core.date.DateUtil
 import com.alibaba.fastjson.serializer.SerializerFeature

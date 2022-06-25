@@ -1,6 +1,6 @@
-package com.flink.app.dws;
+package com.flink.bean.dws;
 
-import com.flink.app.udf.KeywordUDTF;
+import com.flink.bean.udf.KeywordUDTF;
 import com.flink.bean.KeywordStats;
 import com.flink.common.GmallConstant;
 import com.flink.util.ClickHouseUtil;

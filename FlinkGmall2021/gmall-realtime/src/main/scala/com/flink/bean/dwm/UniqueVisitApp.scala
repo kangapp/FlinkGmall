@@ -1,4 +1,4 @@
-package com.flink.app.dwm
+package com.flink.bean.dwm
 
 import com.alibaba.fastjson.{JSON, JSONObject}
 import com.flink.util.MyKafkaUtil

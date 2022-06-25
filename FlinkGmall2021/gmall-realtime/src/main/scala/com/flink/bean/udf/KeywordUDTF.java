@@ -1,4 +1,4 @@
-package com.flink.app.udf;
+package com.flink.bean.udf;
 
 import com.flink.util.KeywordUtil;
 import org.apache.flink.table.annotation.DataTypeHint;

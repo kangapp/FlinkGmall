@@ -1,4 +1,4 @@
-package com.flink.app.dws;
+package com.flink.bean.dws;
 
 import com.flink.bean.ProvinceStats;
 import com.flink.util.ClickHouseUtil;

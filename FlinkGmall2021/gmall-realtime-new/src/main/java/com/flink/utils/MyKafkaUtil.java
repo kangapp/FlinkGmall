@@ -3,17 +3,22 @@ package com.flink.utils;
 import org.apache.flink.api.common.typeinfo.BasicTypeInfo;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
+import org.apache.flink.streaming.connectors.kafka.FlinkKafkaProducer;
 import org.apache.flink.streaming.connectors.kafka.KafkaDeserializationSchema;
+import org.apache.flink.streaming.connectors.kafka.KafkaSerializationSchema;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
 
+import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.Properties;
 
 public class MyKafkaUtil {
 
-    private static String brokers = "localhost:9093";
-    private static String default_topic = "DWD_DEFAULT_TOPIC";
+    private static String brokers = "hadoop100:9092";
+    private static String DEFAULT_TOPIC = "default";
 
     public static FlinkKafkaConsumer<String> getKafkaConsumer(String topic, String groupId){
         Properties properties = new Properties();
@@ -40,5 +45,20 @@ public class MyKafkaUtil {
         },properties);
         consumer.setStartFromLatest();
         return consumer;
+    }
+
+    public static FlinkKafkaProducer<String> getKafkaProducer(String topic) {
+
+        Properties prop = new Properties();
+        prop.setProperty("bootstrap.servers", brokers);
+        prop.setProperty(ProducerConfig.TRANSACTION_TIMEOUT_CONFIG, 60 * 15 * 1000 + "");
+        FlinkKafkaProducer<String> producer = new FlinkKafkaProducer<String>(DEFAULT_TOPIC, new KafkaSerializationSchema<String>() {
+
+            @Override
+            public ProducerRecord<byte[], byte[]> serialize(String jsonStr, @Nullable Long timestamp) {
+                return new ProducerRecord<byte[], byte[]>(topic, jsonStr.getBytes());
+            }
+        }, prop, FlinkKafkaProducer.Semantic.EXACTLY_ONCE);
+        return producer;
     }
 }
