@@ -32,7 +32,7 @@ object BaseLogApp {
       "base_log_app"))
 
     //TODO 3、将数据转化为JSON格式，并过滤掉非JSON格式的数据
-    val dirtyTag: OutputTag[String] = new OutputTag[String]("dirty")
+    val dirtyTag: OutputTag[String] = OutputTag[String]("dirty")
     val cleanedDS: DataStream[JSONObject] = kafkaDS.process(new ProcessFunction[String, JSONObject] {
       override def processElement(i: String, context: ProcessFunction[String, JSONObject]#Context, collector: Collector[JSONObject]): Unit = {
         try {
@@ -53,9 +53,9 @@ object BaseLogApp {
 
     //TODO 4、使用状态编程做新老用户校验
     val keyedDS = cleanedDS.keyBy(_.getJSONObject("common").getString("mid"))
-    keyedDS.map(new RichMapFunction[JSONObject,JSONObject] {
+    val fixedDS: DataStream[JSONObject] = keyedDS.map(new RichMapFunction[JSONObject, JSONObject] {
 
-      private var lastVisitDtState:ValueState[String] = _
+      private var lastVisitDtState: ValueState[String] = _
 
       override def open(parameters: Configuration): Unit = {
         lastVisitDtState = getRuntimeContext.
@@ -86,7 +86,81 @@ object BaseLogApp {
     })
 
     //TODO 5、使用侧输出流对数据进行分流处理
+    val startTag = OutputTag[String]("start")
+    val displayTag = OutputTag[String]("display")
+    val actionTag = OutputTag[String]("action")
+    val errorTag = OutputTag[String]("error")
+
+    val separatedDS: DataStream[String] = fixedDS.process(new ProcessFunction[JSONObject, String] {
+      override def processElement(i: JSONObject, context: ProcessFunction[JSONObject, String]#Context, collector: Collector[String]): Unit = {
+        val jsonString = i.toJSONString
+
+        val error = i.getString("error")
+        if (error != null) {
+          context.output(errorTag, jsonString)
+        }
+
+        val start = i.getString("start")
+        if (start != null) {
+          context.output(startTag, jsonString)
+        } else {
+
+          val page = i.getJSONObject("page");
+          val common = i.getJSONObject("common");
+          val ts = i.getLong("ts");
+
+          val displays = i.getJSONArray("displays")
+          if (displays != null && displays.size() > 0) {
+            for (i <- 0 until displays.size()) {
+              val display = displays.getJSONObject(i)
+              display.put("page", page)
+              display.put("ts", ts)
+              display.put("common", common)
+
+              context.output(displayTag, display.toJSONString)
+            }
+          }
+
+          val actions = i.getJSONArray("actions")
+          if (actions != null && actions.size() > 0) {
+            for (i <- 0 until actions.size()) {
+              val action = actions.getJSONObject(i)
+              action.put("page", page)
+              action.put("ts", ts)
+              action.put("common", common)
+
+              context.output(actionTag, action.toJSONString)
+            }
+          }
+
+          i.remove("displays")
+          i.remove("actions")
+          collector.collect(i.toJSONString)
+        }
+      }
+    })
 
     //TODO 6、提取各个数据流的数据
+    val startDS = separatedDS.getSideOutput(startTag)
+    val actionDS = separatedDS.getSideOutput(actionTag)
+    val displayDS = separatedDS.getSideOutput(displayTag)
+    val errorDS = separatedDS.getSideOutput(errorTag)
+
+    //TODO 7、将数据输出到对应的kafka
+
+    val page_topic = "dwd_traffic_page_log";
+    val start_topic = "dwd_traffic_start_log";
+    val display_topic = "dwd_traffic_display_log";
+    val action_topic = "dwd_traffic_action_log";
+    val error_topic = "dwd_traffic_error_log";
+
+    separatedDS.addSink(MyKafkaUtil.getKafkaProducer(page_topic))
+    startDS.addSink(MyKafkaUtil.getKafkaProducer(start_topic))
+    displayDS.addSink(MyKafkaUtil.getKafkaProducer(display_topic))
+    actionDS.addSink(MyKafkaUtil.getKafkaProducer(action_topic))
+    errorDS.addSink(MyKafkaUtil.getKafkaProducer(error_topic))
+
+
+    env.execute("baseLogApp")
   }
 }

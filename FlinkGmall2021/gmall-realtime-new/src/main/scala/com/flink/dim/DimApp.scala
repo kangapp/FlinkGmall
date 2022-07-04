@@ -6,13 +6,14 @@ import com.alibaba.ververica.cdc.connectors.mysql.table.StartupOptions
 import com.alibaba.ververica.cdc.debezium.{DebeziumSourceFunction, StringDebeziumDeserializationSchema}
 import com.flink.bean.TableProcess
 import com.flink.function.{CustomerDeserializer, DimSinkFunction, TableProcessFunction}
-import com.flink.utils.MyKafkaUtil
+import com.flink.utils.{MyKafkaUtil, PhoenixUtil}
 import org.apache.flink.api.common.state.MapStateDescriptor
 import org.apache.flink.api.scala.createTypeInformation
 import org.apache.flink.api.scala.typeutils.Types
 import org.apache.flink.runtime.state.filesystem.FsStateBackend
 import org.apache.flink.streaming.api.CheckpointingMode
 import org.apache.flink.streaming.api.functions.ProcessFunction
+import org.apache.flink.streaming.api.functions.sink.SinkFunction
 import org.apache.flink.streaming.api.scala.{BroadcastConnectedStream, DataStream, OutputTag, StreamExecutionEnvironment}
 import org.apache.flink.util.Collector
 
@@ -76,7 +77,14 @@ object DimApp {
     val hbaseDS: DataStream[JSONObject] = connectedStream.process(new TableProcessFunction(mapStateDescriptor))
 
     //TODO 8、将数据写出到phoenix中
-    hbaseDS.addSink(new DimSinkFunction)
+    hbaseDS.addSink(new SinkFunction[JSONObject] {
+
+      override def invoke(value: JSONObject, context: SinkFunction.Context): Unit = {
+        val sinkTable = value.getString("sinkTable")
+        value.remove("sinkTable")
+        PhoenixUtil.insertValues(sinkTable, value)
+      }
+    })
 
     //TODO 9、启动任务
     env.execute("DimApp")
